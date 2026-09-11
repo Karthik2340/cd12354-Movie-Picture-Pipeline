@@ -2,15 +2,11 @@ FROM public.ecr.aws/docker/library/python:3.10-slim
 
 ENV FLASK_RUN_HOST=0.0.0.0
 
-WORKDIR /
-
-RUN adduser --uid 1000 app
+RUN useradd --uid 1000 --create-home --shell /bin/bash app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
-    gcc \
-    libpcre3 \
-    libpcre3-dev \
+    libpcre2-dev \
     libssl-dev \
     libffi-dev \
     && rm -rf /var/lib/apt/lists/* \
