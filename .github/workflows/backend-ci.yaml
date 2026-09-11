@@ -6,109 +6,81 @@ on:
       - main
     paths:
       - 'starter/backend/**'
-      - '.github/workflows/backend-ci.yaml'
   workflow_dispatch:
 
 jobs:
   lint:
-    name: Lint
+    name: Backend Lint
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: starter/backend
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Perform a cache action to restore cache before dependency install
-        uses: actions/cache@v4
+      - name: Cache dependencies
+        uses: actions/cache@v3
         with:
-          path: |
-            ~/.local/share/virtualenvs
-            ~/.cache/pip
+          path: ~/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pipenv-
 
-      - name: Install dependencies
-        run: |
-          pip install pipenv
-          pipenv install --dev
+      - name: Install pipenv
+        run: pip install pipenv
 
-      - name: Run the pipenv run lint command
+      - name: Install dependencies
+        working-directory: starter/backend
+        run: pipenv install --dev
+
+      - name: Run linting
+        working-directory: starter/backend
         run: pipenv run lint
 
   test:
-    name: Test
+    name: Backend Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: starter/backend
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Perform a cache action to restore cache before dependency install
-        uses: actions/cache@v4
+      - name: Cache dependencies
+        uses: actions/cache@v3
         with:
-          path: |
-            ~/.local/share/virtualenvs
-            ~/.cache/pip
+          path: ~/.local/share/virtualenvs
           key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pipenv-
 
-      - name: Install dependencies
-        run: |
-          pip install pipenv
-          pipenv install --dev
+      - name: Install pipenv
+        run: pip install pipenv
 
-      - name: Run the pipenv run test command
+      - name: Install dependencies
+        working-directory: starter/backend
+        run: pipenv install --dev
+
+      - name: Run tests
+        working-directory: starter/backend
         run: pipenv run test
 
   build:
-    name: Build
-    needs: [lint, test]
+    name: Backend Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: starter/backend
+    needs: [lint, test]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Perform a cache action to restore cache before dependency install
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/virtualenvs
-            ~/.cache/pip
-          key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv-
-
-      - name: Install dependencies
+      - name: Build Docker image
         run: |
-          pip install pipenv
-          pipenv install --dev
-
-      - name: Run the pipenv run test command
-        run: pipenv run test
-
-      - name: Build the application using docker
-        run: docker build --tag mp-backend:latest .
+          docker build \
+            -t mp-backend:latest \
+            starter/backend
